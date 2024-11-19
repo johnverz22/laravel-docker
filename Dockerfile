@@ -39,7 +39,6 @@ RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/html/.env && \
     sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' /var/www/html/.env && \
     sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=1234/' /var/www/html/.env
 
-RUN cat /var/www/html/.env
 
 # Set the working directory
 WORKDIR /var/www/html
