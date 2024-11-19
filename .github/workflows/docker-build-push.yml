@@ -26,9 +26,17 @@ jobs:
       - name: Extract Git tag
         id: get_tag
         run: |
-          tag=${GITHUB_REF#refs/*/} # Remove "refs/tags/" prefix to get the tag name
+          # tag=${GITHUB_REF#refs/*/} # Remove "refs/tags/" prefix to get the tag name
+          # echo "tag=${tag}" >> $GITHUB_ENV
+          
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            tag=${GITHUB_REF#refs/tags/}  # Extract tag name from refs/tags/
+          else
+            echo "This is not a tag push event."
+            exit 1  # Optional: Exit or handle the branch push differently
+          fi
           echo "tag=${tag}" >> $GITHUB_ENV
-          echo ${tag}
+          echo ${tag}  # Should print the correct tag name, e.g., v.0.2
 
       # Replace the image tag in docker-compose.yml
       - name: Replace image tag in docker-compose
