@@ -43,7 +43,7 @@ RUN npm install
 RUN npm run build
 
 # Remove dev dependencies to keep image clean and small
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \

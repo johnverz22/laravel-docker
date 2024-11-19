@@ -26,13 +26,11 @@ services:
   db:
     platform: "linux/amd64"
     image: mysql:8.0
-    env_file:
-      - .env
     environment:
       MYSQL_ROOT_PASSWORD: admin
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: 1234
     command: --bind-address=0.0.0.0
     ports:
       - "3306:3306"
