@@ -1,6 +1,6 @@
 services:
   web:
-    image: johnverz7/laravel-app:latest
+    image: johnverz7/laravel-app:main
     build:
       target: web
       context: .
