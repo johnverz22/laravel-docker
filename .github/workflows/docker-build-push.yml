@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Docker
+      # Set up Docker Buildx
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
@@ -23,18 +23,22 @@ jobs:
         id: get_tag
         run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      # Build and push the Docker image
+      # Replace the image tag in docker-compose.yml
+      - name: Replace image tag in docker-compose
+        run: |
+          sed -i "s|image:.*|image: johnverz7/laravel-app:${tag}|" docker-compose.yml
+
+      # Log in to DockerHub
+      - name: Log in to DockerHub
+        run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build and push Docker image
       - name: Build and Push Docker Image
         run: |
-          # Replace the tag in the docker-compose.yml file dynamically
-          sed -i "s|image:.*|image: myusername/repo:$tag|" docker-compose.yml
-          
-          # Build and push the Docker image
           docker compose build
           docker compose push
         env:
           tag: ${{ env.tag }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Set in repository secrets
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }} # Set in repository secrets
-      - name: Log in to DockerHub
-        run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin

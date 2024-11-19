@@ -4,18 +4,18 @@ services:
     build:
       target: web
       context: .
-      environment:
-          # Laravel-specific environment variables
-          APP_ENV: local
-          APP_DEBUG: true
-          APP_KEY: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-          APP_URL: http://localhost
-          DB_CONNECTION: mysql
-          DB_HOST: db
-          DB_PORT: 3306
-          DB_DATABASE: laravel
-          DB_USERNAME: laravel
-          DB_PASSWORD: 1234
+    environment:
+      # Laravel-specific environment variables
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      APP_URL: http://localhost
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: 1234
     ports:
       - "8000:80"
     volumes:
