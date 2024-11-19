@@ -42,9 +42,6 @@ RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env && \
     sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' .env && \
     sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=1234/' .env
 
-
-
-
 # Install Composer and PHP dependencies
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     composer install --no-dev --optimize-autoloader
