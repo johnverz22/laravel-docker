@@ -1,0 +1,14 @@
+# Ignore environment and config files
+.env
+
+# Ignore system files
+.git
+.gitignore
+/node_modules
+/vendor
+
+# Ignore editor files
+*.log
+*.swp
+*~.swp
+.DS_Store

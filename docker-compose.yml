@@ -1,6 +1,6 @@
 services:
   web:
-    image: johnverz7/laravel-app:latest
+    image: johnverz7/laravel-app:${IMAGE_TAG}
     build:
       target: web
       context: .
@@ -15,7 +15,7 @@ services:
   
   db:
     platform: "linux/amd64"
-    image: mysql:5.7
+    image: mysql:8.0
     env_file:
       - .env
     environment:

@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     ca-certificates \
     software-properties-common && \
-    curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -25,10 +25,8 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Copy the application code and set permissions
+# Copy the application code 
 COPY . /var/www/html
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
-    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Set the working directory
 WORKDIR /var/www/html
@@ -37,8 +35,19 @@ WORKDIR /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     composer install --no-dev --optimize-autoloader
 
-# Install Node.js dependencies
-RUN npm install --production
+
+# Install Nodejs dependencies
+RUN npm install
+
+# Compile assets
+RUN npm run build
+
+# Remove dev dependencies to keep image clean and small
+RUN npm prune --production
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose the port Apache is listening on
 EXPOSE 80
