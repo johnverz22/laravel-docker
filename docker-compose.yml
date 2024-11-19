@@ -1,21 +1,11 @@
 services:
   web:
-    image: johnverz7/laravel-app:main
+    image: johnverz7/laravel-app:latest
     build:
       target: web
       context: .
-    environment:
-      # Laravel-specific environment variables
-      APP_ENV: local
-      APP_DEBUG: true
-      APP_KEY: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      APP_URL: http://localhost
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: laravel
-      DB_USERNAME: laravel
-      DB_PASSWORD: 1234
+    env_file:
+      - .env
     ports:
       - "8000:80"
     volumes:
@@ -26,11 +16,13 @@ services:
   db:
     platform: "linux/amd64"
     image: mysql:8.0
+    env_file:
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: admin
-      MYSQL_DATABASE: laravel
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: 1234
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     command: --bind-address=0.0.0.0
     ports:
       - "3306:3306"

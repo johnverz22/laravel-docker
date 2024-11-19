@@ -28,6 +28,17 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 # Copy the application code 
 COPY . /var/www/html
 
+# Rename .env.example to .env
+RUN mv /var/www/html/.env.example /var/www/html/.env
+
+# Set environment variables for DB connection
+ENV DB_CONNECTION=mysql
+ENV DB_HOST=db
+ENV DB_PORT=3306
+ENV DB_DATABASE=laravel
+ENV DB_USERNAME=laravel
+ENV DB_PASSWORD=1234
+
 # Set the working directory
 WORKDIR /var/www/html
 
