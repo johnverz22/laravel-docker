@@ -31,13 +31,13 @@ COPY . /var/www/html
 # Rename .env.example to .env
 RUN mv /var/www/html/.env.example /var/www/html/.env
 
-# Set environment variables for DB connection
-ENV DB_CONNECTION=mysql
-ENV DB_HOST=db
-ENV DB_PORT=3306
-ENV DB_DATABASE=laravel
-ENV DB_USERNAME=laravel
-ENV DB_PASSWORD=1234
+# Set environment variables for DB connection directly in the .env file
+RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/html/.env && \
+    sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/html/.env && \
+    sed -i 's/DB_PORT=.*/DB_PORT=3306/' /var/www/html/.env && \
+    sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel/' /var/www/html/.env && \
+    sed -i 's/DB_USERNAME=.*/DB_USERNAME=laravel/' /var/www/html/.env && \
+    sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=1234/' /var/www/html/.env
 
 # Set the working directory
 WORKDIR /var/www/html

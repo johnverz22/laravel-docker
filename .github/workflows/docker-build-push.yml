@@ -27,8 +27,8 @@ jobs:
         id: get_tag
         run: |
           tag=${GITHUB_REF#refs/*/} # Remove "refs/tags/" prefix to get the tag name
-          echo tag
           echo "tag=${tag}" >> $GITHUB_ENV
+          echo ${{ env.tag }}
 
       # Replace the image tag in docker-compose.yml
       - name: Replace image tag in docker-compose
