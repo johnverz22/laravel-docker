@@ -1,6 +1,6 @@
 services:
   web:
-    image: johnverz7/laravel-app:${IMAGE_TAG}
+    image: johnverz7/laravel-app:latest
     build:
       target: web
       context: .
