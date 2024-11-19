@@ -1,0 +1,38 @@
+name: Build and Push Docker Image with Docker Compose and Dynamic Tag
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:  # Global environment variables for the job
+      REGISTRY_URL: ${{ secrets.REGISTRY_URL || 'docker.io' }}
+      IMAGE_TAG: ${{ env.IMAGE_TAG }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get the latest Git tag
+        id: git_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 --match "v*" || echo "latest")
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Log in to Docker registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ secrets.REGISTRY_URL || 'docker.io' }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml push
