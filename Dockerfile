@@ -31,6 +31,8 @@ COPY . /var/www/html
 # Rename .env.example to .env
 RUN mv /var/www/html/.env.example /var/www/html/.env
 
+RUN ls -la /var/www/html/
+
 # Set environment variables for DB connection directly in the .env file
 RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/html/.env && \
     sed -i 's/DB_HOST=.*/DB_HOST=db/' /var/www/html/.env && \
@@ -38,6 +40,8 @@ RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' /var/www/html/.env && \
     sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel/' /var/www/html/.env && \
     sed -i 's/DB_USERNAME=.*/DB_USERNAME=laravel/' /var/www/html/.env && \
     sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=1234/' /var/www/html/.env
+
+RUN cat /var/www/html/.env
 
 # Set the working directory
 WORKDIR /var/www/html
