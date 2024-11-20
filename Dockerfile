@@ -31,16 +31,6 @@ COPY . /var/www/html
 # Set the working directory
 WORKDIR /var/www/html
 
-# Rename .env.example to .env
-RUN mv .env.example .env
-
-# Set environment variables for DB connection directly in the .env file
-RUN sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env && \
-    sed -i 's/# DB_HOST=.*/DB_HOST=db/' .env && \
-    sed -i 's/# DB_PORT=.*/DB_PORT=3306/' .env && \
-    sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' .env && \
-    sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' .env && \
-    sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=1234/' .env
 
 # Install Composer and PHP dependencies
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
