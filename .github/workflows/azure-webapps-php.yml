@@ -94,14 +94,18 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
 
-      - name: Generate Laravel app key
+      - name: Run commands on Azure App Service
+        env:
+          AZURE_CLI_PASSWORD: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
-          cd /var/www/html/wwwroot
+          # Login to Azure CLI using the publish profile
+          echo "$AZURE_CLI_PASSWORD" > azure_publish_profile
+          az webapp deploy --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group SoftEng --src-path .
+          
+          # SSH into Azure App Service to run artisan commands
+          az webapp ssh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group SoftEng <<EOF
+          cd /home/site/wwwroot
           php artisan key:generate
-          echo "Application key generated."
-
-      - name: Run database migrations
-        run: |
-          cd /var/www/html/wwwroot
           php artisan migrate --force
-          echo "Database migrations completed."
+          exit
+          EOF
