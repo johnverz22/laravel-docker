@@ -2,13 +2,13 @@ name: Build and deploy Laravel app to Azure Web App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: mylaravelapp    # Set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: '.'     # Set this to the path to your web app project, defaults to the repository root
-  PHP_VERSION: '8.2'                 # Set this to the PHP version to use
+  AZURE_WEBAPP_NAME: mylaravelapp        # Set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'         # Path to your Laravel project
+  PHP_VERSION: '8.2'                     # PHP version to use
 
 permissions:
   contents: read
@@ -20,50 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
           extensions: mbstring, pdo, bcmath, intl
 
-      - name: Rename .env.example to .env
-        run: |
-          cp .env.example .env
-          echo "Renamed .env.example to .env"
-
-      - name: Replace environment variables
-        run: |
-          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env && \
-          sed -i 's/# DB_HOST=.*/DB_HOST=db/' .env && \
-          sed -i 's/# DB_PORT=.*/DB_PORT=3306/' .env && \
-          sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' .env && \
-          sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' .env && \
-          sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=1234/' .env
-
-      - name: Install Composer
-        run: |
-          curl -sS https://getcomposer.org/installer | php
-          sudo mv composer.phar /usr/local/bin/composer
-          echo "Composer installed successfully."
-
-      - name: Install Composer dependencies (Production)
+      - name: Install Composer dependencies
         run: |
           composer install --no-dev --optimize-autoloader
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          echo "Laravel dependencies installed and optimized for production."
 
-      - name: Setup Node.js
+      - name: Build front-end assets
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-
-      - name: Install npm dependencies and build for production
-        run: |
+      - run: |
           npm install
           npm run build --production
-          echo "npm dependencies installed and built for production."
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -76,9 +49,6 @@ jobs:
       contents: none
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Development'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
       - name: Download artifact from build job
@@ -87,25 +57,30 @@ jobs:
           name: laravel-app
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
 
-      - name: Run commands on Azure App Service
-        env:
-          AZURE_CLI_PASSWORD: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      - name: Modify config/database.php to use Azure env variables
         run: |
-          # Login to Azure CLI using the publish profile
-          echo "$AZURE_CLI_PASSWORD" > azure_publish_profile
-          az webapp deploy --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group SoftEng --src-path .
-          
-          # SSH into Azure App Service to run artisan commands
-          az webapp ssh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group SoftEng <<EOF
-          cd /home/site/wwwroot
-          php artisan key:generate
-          php artisan migrate --force
-          exit
-          EOF
+          # Replace DB settings in config/database.php with Azure environment variables
+          sed -i "s|DB_CONNECTION', 'sqlite'|DB_CONNECTION', 'mysql'|g" config/database.php
+          # Replace DB_HOST with AZURE_MYSQL_HOST for the MySQL configuration section
+          sed -i '/\'mysql\' => \[/,/\],/s|DB_HOST|AZURE_MYSQL_HOST|g' config/database.php
+          # Replace DB_PORT with AZURE_MYSQL_PORT for the MySQL configuration section
+          sed -i '/\'mysql\' => \[/,/\],/s|DB_PORT|AZURE_MYSQL_PORT|g' config/database.php
+          # Replace DB_DATABASE with AZURE_MYSQL_DBNAME for the MySQL configuration section
+          sed -i '/\'mysql\' => \[/,/\],/s|DB_DATABASE|AZURE_MYSQL_DBNAME|g' config/database.php
+          # Replace DB_USERNAME with AZURE_MYSQL_USERNAME for the MySQL configuration section
+          sed -i '/\'mysql\' => \[/,/\],/s|DB_USERNAME|AZURE_MYSQL_USERNAME|g' config/database.php
+          # Replace DB_PASSWORD with AZURE_MYSQL_PASSWORD for the MySQL configuration section
+          sed -i '/\'mysql\' => \[/,/\],/s|DB_PASSWORD|AZURE_MYSQL_PASSWORD|g' config/database.php
+          echo "Replaced DB_* with AZURE_MYSQL_* variables in the MySQL configuration section of config/database.php"
+
+      - name: Run Laravel Migrations
+        run: |
+          az webapp ssh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group YourResourceGroup --command "
+          cd /home/site/wwwroot &&
+          php artisan migrate --force"
