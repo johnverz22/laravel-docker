@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: mylaravelapp    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
-  PHP_VERSION: '8.2'                  # set this to the PHP version to use
+  AZURE_WEBAPP_NAME: mylaravelapp    # Set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'     # Set this to the path to your web app project, defaults to the repository root
+  PHP_VERSION: '8.2'                 # Set this to the PHP version to use
 
 permissions:
   contents: read
@@ -31,37 +31,30 @@ jobs:
           cp .env.example .env
           echo "Renamed .env.example to .env"
 
-      - name: Check if composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v2
-        with:
-          files: 'composer.json'
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        if: steps.check_files.outputs.files_exists == 'true'
+      - name: Install Composer
         run: |
-          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          curl -sS https://getcomposer.org/installer | php
+          sudo mv composer.phar /usr/local/bin/composer
+          echo "Composer installed successfully."
 
-      - name: Set up dependency caching for faster installs
-        uses: actions/cache@v3
-        if: steps.check_files.outputs.files_exists == 'true'
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Run composer install if composer.json exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
-
-      - name: Cache Laravel configuration
+      - name: Install Composer dependencies (Production)
         run: |
+          composer install --no-dev --optimize-autoloader
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
-          echo "Laravel configuration cached"
+          echo "Laravel dependencies installed and optimized for production."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install npm dependencies and build for production
+        run: |
+          npm install
+          npm run build --production
+          echo "npm dependencies installed and built for production."
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -77,13 +70,13 @@ jobs:
     environment:
       name: 'Development'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-  
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
           name: laravel-app
-  
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
@@ -91,7 +84,7 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
-  
+
       - name: Ensure .env file exists and set database connections
         run: |
           ENV_PATH="/var/www/html/wwwroot/.env"
@@ -107,30 +100,13 @@ jobs:
             sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=${{ secrets.DB_PASSWORD }}/" $ENV_PATH
           fi
           echo ".env file setup and database configuration completed."
-  
+
       - name: Generate Laravel app key
         run: |
           cd /var/www/html/wwwroot
           php artisan key:generate
           echo "Application key generated."
 
-      - name: Cache Laravel configuration
-        run: |
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          echo "Laravel configuration cached"
-  
-      - name: Configure Nginx for Laravel
-        run: |
-          sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/laravel
-          sudo sed -i "s|root /var/www/html|root /var/www/html/wwwroot/public|g" /etc/nginx/sites-available/laravel
-          sudo sed -i "s|index index.html|index index.php|g" /etc/nginx/sites-available/laravel
-          sudo sed -i "/server_name _;/a \\\tlocation ~ \\.php$ {\\n\t\tinclude snippets/fastcgi-php.conf;\\n\t\tfastcgi_pass unix:/var/run/php/php${{ env.PHP_VERSION }}-fpm.sock;\\n\t\tfastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;\\n\t}\\n" /etc/nginx/sites-available/laravel
-          sudo ln -sf /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
-          sudo nginx -s reload
-          echo "Nginx configured for Laravel with /var/www/html/wwwroot/public as root."
-  
       - name: Run database migrations
         run: |
           cd /var/www/html/wwwroot
