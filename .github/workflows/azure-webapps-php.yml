@@ -31,12 +31,14 @@ jobs:
           cp .env.example .env
           echo "Renamed .env.example to .env"
 
-      - name: Configure .env
+      - name: Replace environment variables
         run: |
-          sed -i "s/DB_HOST=.*/DB_HOST=${{ secrets.DB_HOST }}/" $ENV_PATH
-          sed -i "s/DB_DATABASE=.*/DB_DATABASE=${{ secrets.DB_DATABASE }}/" $ENV_PATH
-          sed -i "s/DB_USERNAME=.*/DB_USERNAME=${{ secrets.DB_USERNAME }}/" $ENV_PATH
-          sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=${{ secrets.DB_PASSWORD }}/" $ENV_PATH
+          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env && \
+          sed -i 's/# DB_HOST=.*/DB_HOST=db/' .env && \
+          sed -i 's/# DB_PORT=.*/DB_PORT=3306/' .env && \
+          sed -i 's/# DB_DATABASE=.*/DB_DATABASE=laravel/' .env && \
+          sed -i 's/# DB_USERNAME=.*/DB_USERNAME=laravel/' .env && \
+          sed -i 's/# DB_PASSWORD=.*/DB_PASSWORD=1234/' .env
 
       - name: Install Composer
         run: |
