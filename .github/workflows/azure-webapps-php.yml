@@ -38,11 +38,17 @@ jobs:
           npm install
           npm run build --production
 
+       # Create a compressed archive (tar.gz) of the application files
+      - name: Create archive of Laravel app
+        run: |
+          tar -czf laravel-app.tar.gz --exclude=node_modules --exclude=vendor --exclude=.git .
+          echo "Created a tar.gz archive of the application."
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: laravel-app
-          path: .
+          path: laravel-app.tar.gz
 
   deploy:
     permissions:
@@ -55,6 +61,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: laravel-app
+        
+      # Unzip the tar.gz archive before deployment
+      - name: Extract the archive
+        run: |
+          tar -xzf laravel-app.tar.gz
+          echo "Extracted the tar.gz archive."
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
