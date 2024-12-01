@@ -38,6 +38,10 @@ jobs:
           npm install
           npm run build --production
 
+      - name: Download SSL CA file
+        run: |
+          wget -O ./storage/ssl/DigiCertGlobalRootCA.crt.pem https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
@@ -62,25 +66,3 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
-
-      - name: Modify config/database.php to use Azure env variables
-        run: |
-          # Replace DB settings in config/database.php with Azure environment variables
-          sed -i "s|DB_CONNECTION', 'sqlite'|DB_CONNECTION', 'mysql'|g" config/database.php
-          # Replace DB_HOST with AZURE_MYSQL_HOST for the MySQL configuration section
-          sed -i '/\'mysql\' => \[/,/\],/s|DB_HOST|AZURE_MYSQL_HOST|g' config/database.php
-          # Replace DB_PORT with AZURE_MYSQL_PORT for the MySQL configuration section
-          sed -i '/\'mysql\' => \[/,/\],/s|DB_PORT|AZURE_MYSQL_PORT|g' config/database.php
-          # Replace DB_DATABASE with AZURE_MYSQL_DBNAME for the MySQL configuration section
-          sed -i '/\'mysql\' => \[/,/\],/s|DB_DATABASE|AZURE_MYSQL_DBNAME|g' config/database.php
-          # Replace DB_USERNAME with AZURE_MYSQL_USERNAME for the MySQL configuration section
-          sed -i '/\'mysql\' => \[/,/\],/s|DB_USERNAME|AZURE_MYSQL_USERNAME|g' config/database.php
-          # Replace DB_PASSWORD with AZURE_MYSQL_PASSWORD for the MySQL configuration section
-          sed -i '/\'mysql\' => \[/,/\],/s|DB_PASSWORD|AZURE_MYSQL_PASSWORD|g' config/database.php
-          echo "Replaced DB_* with AZURE_MYSQL_* variables in the MySQL configuration section of config/database.php"
-
-      - name: Run Laravel Migrations
-        run: |
-          az webapp ssh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group YourResourceGroup --command "
-          cd /home/site/wwwroot &&
-          php artisan migrate --force"
