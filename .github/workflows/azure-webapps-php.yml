@@ -40,6 +40,8 @@ jobs:
 
       - name: Download SSL CA file
         run: |
+          pwd
+          ls
           wget -O ./storage/ssl/DigiCertGlobalRootCA.crt.pem https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
 
       - name: Upload artifact for deployment job
